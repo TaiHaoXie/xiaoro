@@ -1,0 +1,89 @@
+# ================================
+# 电商智能导购Agent - 依赖包列表（v2.0 - 优化版）
+# ================================
+# 安装方式: pip install -r requirements.txt
+# 最后更新: 2026-05-17
+
+# ========== FastAPI 核心框架 ==========
+fastapi==0.115.0             # Web框架（升级：0.109.0 → 0.115.0）
+uvicorn[standard]==0.30.0    # ASGI服务器（升级：0.27.0 → 0.30.0）
+python-multipart==0.0.9       # 文件上传支持（升级：0.0.6 → 0.0.9）
+pydantic==2.8.0               # 数据验证（升级：2.5.3 → 2.8.0）
+pydantic-settings==2.4.0       # 配置管理（升级：2.1.0 → 2.4.0）
+
+# ========== 数据库相关 ==========
+asyncpg==0.29.0                # PostgreSQL异步驱动（保持）
+psycopg2-binary==2.9.9        # PostgreSQL同步驱动（备用，考虑移除）
+pymilvus==2.4.2               # Milvus向量数据库客户端（升级：2.3.4 → 2.4.2）
+redis==5.0.1                  # Redis客户端（保持）
+
+# ========== LLM API 客户端 ==========
+openai==1.54.0                 # OpenAI兼容API（保持）
+httpx==0.27.2                  # HTTP客户端（保持）
+
+# ========== RAG 框架 ==========
+langchain==0.2.0               # RAG框架（升级：0.1.0 → 0.2.0）
+langchain-community==0.2.0    # LangChain社区扩展（升级：0.0.10 → 0.2.0）
+langchain-openai==0.1.0        # LangChain OpenAI集成（新增）
+
+# ========== 多模态/图片处理 ==========
+Pillow==10.4.0                # 图片处理（升级：10.2.0 → 10.4.0）
+torch==2.4.0                   # PyTorch（升级：2.1.2 → 2.4.0）
+transformers==4.40.0          # HuggingFace模型（升级：4.36.2 → 4.40.0）
+# sentence-transformers==2.3.1  # 已移除，与CLIP重复
+
+# ========== 图片向量化（CLIP） ==========
+openai-clip==1.0.1             # CLIP模型官方包（新增，更稳定）
+ftfy==6.2.0                    # CLIP依赖（新增）
+regex==2023.12.1              # CLIP依赖（新增）
+
+# ========== 中文CLIP（可选）============
+# chinese-clip @ https://github.com/OFA-Sys/Chinese-CLIP.git # 中文CLIP（备用）
+
+# ========== 文档解析 ==========
+PyPDF2==3.0.1                  # PDF解析（保持）
+python-docx==1.1.0             # Word文档解析（保持）
+PyMuPDF==1.23.0                # PDF解析增强（新增，更强大）
+
+# ========== OCR识别 ==========
+rapidocr_onnxruntime==1.3.0    # RapidOCR（升级，版本更新）
+
+# ========== 工具库 ==========
+python-dotenv==1.0.0           # 环境变量管理（保持）
+python-jose[cryptography]==3.3.0  # JWT处理（保持）
+passlib[bcrypt]==1.7.4         # 密码加密（保持）
+loguru==0.7.2                  # 日志库（保持）
+
+# ========== 任务队列（可选）==========
+celery==5.3.4                  # 异步任务队列（保持）
+kombu==5.3.4                   # Celery消息传递（保持）
+
+# ========== 速率限制 ==========
+slowapi==0.1.9                 # API速率限制（新增）
+limits==3.6.0                  # 速率限制库（新增）
+
+# ========== 监控（新增）==========
+prometheus-client==0.20.0      # Prometheus监控（新增）
+prometheus-fastapi-instrumentator==7.0.0  # FastAPI监控（新增）
+
+# ========== 测试工具 ==========
+pytest==8.0.0                  # 测试框架（升级：7.4.3 → 8.0.0）
+pytest-asyncio==0.23.0         # 异步测试支持（升级：0.21.1 → 0.23.0）
+httpx==0.27.0                  # 测试客户端（保持）
+
+# ========== 开发工具 ==========
+black==24.3.0                  # 代码格式化（升级：23.12.1 → 24.3.0）
+flake8==7.0.0                  # 代码检查（保持）
+mypy==1.9.0                    # 类型检查（升级：1.8.0 → 1.9.0）
+
+# ========== 性能优化（新增）==========
+orjson==3.10.0                 # 快速JSON解析（新增）
+uvloop==0.19.0                 # 事件循环优化（macOS不兼容）
+
+# ========== 安全（新增）==========
+python-multipart==0.0.9        # 文件上传安全
+pydantic-settings==2.4.0       # 环境变量安全管理
+
+# ========== 日志增强（新增）==========
+python-json-logger==2.0.7      # JSON日志格式化
+structlog==24.1.0              # 结构化日志

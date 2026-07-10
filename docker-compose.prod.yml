@@ -1,0 +1,71 @@
+# ==================== 生产环境 Docker Compose 配置 ====================
+# 使用方式: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  # ==================== FastAPI应用（生产配置）====================
+  app:
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=WARNING
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    restart: always
+
+  # ==================== Celery Worker（生产配置）====================
+  celery_worker:
+    command: celery -A app.tasks.worker worker --loglevel=warning --concurrency=4
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    restart: always
+
+  # ==================== PostgreSQL（生产配置）====================
+  postgres:
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}  # 从环境变量读取
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./backups:/backups  # 备份目录
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+
+  # ==================== Redis（生产配置）====================
+  redis:
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  # ==================== Nginx（生产配置）====================
+  nginx:
+    ports:
+      - "80:80"
+      - "443:443"  # 启用HTTPS
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./static:/app/static:ro
+      - ./ssl:/etc/nginx/ssl:ro  # SSL证书
+      - ./logs/nginx:/var/log/nginx
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M

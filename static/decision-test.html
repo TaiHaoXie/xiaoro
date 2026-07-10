@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>决策辅助 - 商品对比分析</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        .header h1 { font-size: 32px; margin-bottom: 8px; }
+        .header p { opacity: 0.9; }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        .tab {
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .tab:hover { background: rgba(255,255,255,0.3); }
+        .tab.active {
+            background: white;
+            color: #667eea;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .card-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .card-header h2 { font-size: 20px; }
+        .card-body {
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn:active { transform: translateY(0); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .product-select {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .product-checkbox {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .product-checkbox:hover { border-color: #667eea; }
+        .product-checkbox.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .comparison-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        .comparison-table tr:hover { background: #f8f9fa; }
+
+        .result-section {
+            display: none;
+        }
+        .result-section.active { display: block; }
+
+        .product-card {
+            border: 1px solid #eee;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+        .product-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .product-card h4 {
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .product-card .price {
+            color: #e74c3c;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .scenario-card {
+            padding: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .scenario-card:hover { border-color: #667eea; }
+        .scenario-card.selected {
+            background: #f0f4ff;
+            border-color: #667eea;
+        }
+        .scenario-card .icon { font-size: 32px; margin-bottom: 8px; }
+
+        .scenarios-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .pros, .cons {
+            padding: 16px;
+            border-radius: 12px;
+        }
+        .pros { background: #d4edda; }
+        .cons { background: #f8d7da; }
+        .pros h4 { color: #155724; margin-bottom: 12px; }
+        .cons h4 { color: #721c24; margin-bottom: 12px; }
+        .pros ul, .cons ul {
+            padding-left: 20px;
+            color: #333;
+        }
+        .pros li, .cons li {
+            margin-bottom: 8px;
+        }
+
+        .winner-card {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .winner-card h3 {
+            color: #333;
+            margin-bottom: 12px;
+        }
+        .winner-card .product-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .quick-products {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .quick-product-btn {
+            padding: 8px 16px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .quick-product-btn:hover {
+            background: #e9ecef;
+        }
+        .quick-product-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤔 决策辅助</h1>
+            <p>智能商品对比、购买建议、优缺点分析</p>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="compare">📊 商品对比</div>
+            <div class="tab" data-tab="recommend">💡 购买建议</div>
+            <div class="tab" data-tab="analyze">🔍 优缺点分析</div>
+            <div class="tab" data-tab="quick">⚡ 快速决策</div>
+        </div>
+
+        <!-- 商品对比 -->
+        <div class="card result-section active" id="compare-section">
+            <div class="card-header">
+                <h2>📊 商品对比分析</h2>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>选择要对比的商品（2-5个）</label>
+                    <div class="quick-products" id="productSelector">
+                        <button class="quick-product-btn" data-id="1">iPhone 15 Pro</button>
+                        <button class="quick-product-btn" data-id="2">小米14 Ultra</button>
+                        <button class="quick-product-btn" data-id="3">华为Mate 60 Pro</button>
+                        <button class="quick-product-btn" data-id="4">OPPO Find X7</button>
+                        <button class="quick-product-btn" data-id="5">vivo X100 Pro</button>
+                    </div>
+                    <div style="margin-top: 12px;">
+                        <small>已选择: <span id="selectedCount">0</span>/5</small>
+                    </div>
+                </div>
+                <button class="btn" id="compareBtn" onclick="compareProducts()">开始对比</button>
+
+                <div id="compareResult"></div>
+            </div>
+        </div>
+
+        <!-- 购买建议 -->
+        <div class="card result-section" id="recommend-section">
+            <div class="card-header">
+                <h2>💡 智能购买建议</h2>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>使用场景</label>
+                    <div class="scenarios-grid" id="scenarioSelector">
+                        <div class="scenario-card" data-scenario="gaming">
+                            <div class="icon">🎮</div>
+                            <div>游戏娱乐</div>
+                        </div>
+                        <div class="scenario-card" data-scenario="office">
+                            <div class="icon">💼</div>
+                            <div>办公学习</div>
+                        </div>
+                        <div class="scenario-card" data-scenario="photography">
+                            <div class="icon">📸</div>
+                            <div>摄影创作</div>
+                        </div>
+                        <div class="scenario-card" data-scenario="budget">
+                            <div class="icon">💰</div>
+                            <div>高性价比</div>
+                        </div>
+                        <div class="scenario-card" data-scenario="premium">
+                            <div class="icon">👑</div>
+                            <div>高端旗舰</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>预算（可选）</label>
+                    <input type="number" class="form-control" id="budgetInput" placeholder="例如: 5000">
+                </div>
+                <div class="form-group">
+                    <label>商品类别（可选）</label>
+                    <select class="form-control" id="categorySelect">
+                        <option value="">不限</option>
+                        <option value="手机">手机</option>
+                        <option value="笔记本电脑">笔记本电脑</option>
+                        <option value="平板">平板</option>
+                        <option value="耳机">耳机</option>
+                    </select>
+                </div>
+                <button class="btn" id="recommendBtn" onclick="getRecommendation()">获取建议</button>
+
+                <div id="recommendResult"></div>
+            </div>
+        </div>
+
+        <!-- 优缺点分析 -->
+        <div class="card result-section" id="analyze-section">
+            <div class="card-header">
+                <h2>🔍 商品优缺点分析</h2>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>选择商品</label>
+                    <select class="form-control" id="analyzeProductSelect">
+                        <option value="">请选择...</option>
+                        <option value="1">iPhone 15 Pro</option>
+                        <option value="2">小米14 Ultra</option>
+                        <option value="3">华为Mate 60 Pro</option>
+                        <option value="4">OPPO Find X7</option>
+                        <option value="5">vivo X100 Pro</option>
+                    </select>
+                </div>
+                <button class="btn" id="analyzeBtn" onclick="analyzeProduct()">开始分析</button>
+
+                <div id="analyzeResult"></div>
+            </div>
+        </div>
+
+        <!-- 快速决策 -->
+        <div class="card result-section" id="quick-section">
+            <div class="card-header">
+                <h2>⚡ 快速决策助手</h2>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>选择待选商品</label>
+                    <div class="quick-products" id="quickProductSelector">
+                        <button class="quick-product-btn" data-id="1">iPhone 15 Pro</button>
+                        <button class="quick-product-btn" data-id="2">小米14 Ultra</button>
+                        <button class="quick-product-btn" data-id="3">华为Mate 60 Pro</button>
+                        <button class="quick-product-btn" data-id="4">OPPO Find X7</button>
+                        <button class="quick-product-btn" data-id="5">vivo X100 Pro</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>预算（可选）</label>
+                    <input type="number" class="form-control" id="quickBudgetInput" placeholder="例如: 8000">
+                </div>
+                <div class="form-group">
+                    <label>优先级</label>
+                    <select class="form-control" id="prioritySelect">
+                        <option value="value">性价比优先</option>
+                        <option value="performance">性能优先</option>
+                        <option value="balance">综合均衡</option>
+                    </select>
+                </div>
+                <button class="btn" id="quickBtn" onclick="quickDecision()">帮我决定</button>
+
+                <div id="quickResult"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api/v1/decision';
+        let selectedProducts = [];
+        let selectedScenario = null;
+        let quickSelectedProducts = [];
+
+        // Tab 切换
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.result-section').forEach(s => s.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`${tab.dataset.tab}-section`).classList.add('active');
+            });
+        });
+
+        // 商品选择器
+        document.querySelectorAll('#productSelector .quick-product-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = parseInt(btn.dataset.id);
+                if (selectedProducts.includes(id)) {
+                    selectedProducts = selectedProducts.filter(p => p !== id);
+                    btn.classList.remove('active');
+                } else if (selectedProducts.length < 5) {
+                    selectedProducts.push(id);
+                    btn.classList.add('active');
+                }
+                document.getElementById('selectedCount').textContent = selectedProducts.length;
+            });
+        });
+
+        // 快速决策商品选择器
+        document.querySelectorAll('#quickProductSelector .quick-product-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = parseInt(btn.dataset.id);
+                if (quickSelectedProducts.includes(id)) {
+                    quickSelectedProducts = quickSelectedProducts.filter(p => p !== id);
+                    btn.classList.remove('active');
+                } else {
+                    quickSelectedProducts.push(id);
+                    btn.classList.add('active');
+                }
+            });
+        });
+
+        // 场景选择器
+        document.querySelectorAll('.scenario-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                selectedScenario = card.dataset.scenario;
+            });
+        });
+
+        // 商品对比
+        async function compareProducts() {
+            if (selectedProducts.length < 2) {
+                alert('请至少选择2个商品进行对比');
+                return;
+            }
+
+            const resultDiv = document.getElementById('compareResult');
+            resultDiv.innerHTML = '<div class="loading"><div class="loading-spinner"></div><p>正在分析对比...</p></div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/compare`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ product_ids: selectedProducts })
+                });
+                const data = await response.json();
+
+                let html = '<table class="comparison-table"><thead><tr><th>维度</th>';
+                data.products.forEach(p => {
+                    html += `<th>${p.name}</th>`;
+                });
+                html += '</tr></thead><tbody>';
+
+                Object.entries(data.dimensions).forEach(([key, values]) => {
+                    html += `<tr><td><strong>${key}</strong></td>`;
+                    values.forEach(v => {
+                        html += `<td>${v}</td>`;
+                    });
+                    html += '</tr>';
+                });
+
+                html += '</tbody></table>';
+                html += `<div style="margin-top: 20px; padding: 16px; background: #f8f9fa; border-radius: 12px;">
+                    <h4>💡 对比总结</h4>
+                    <p style="line-height: 1.8; color: #555;">${data.summary}</p>
+                </div>`;
+
+                resultDiv.innerHTML = html;
+            } catch (error) {
+                resultDiv.innerHTML = `<div style="text-align: center; padding: 40px; color: #e74c3c;">
+                    <p>对比失败: ${error.message}</p>
+                </div>`;
+            }
+        }
+
+        // 购买建议
+        async function getRecommendation() {
+            if (!selectedScenario) {
+                alert('请选择一个使用场景');
+                return;
+            }
+
+            const resultDiv = document.getElementById('recommendResult');
+            resultDiv.innerHTML = '<div class="loading"><div class="loading-spinner"></div><p>正在生成建议...</p></div>';
+
+            try {
+                const budget = document.getElementById('budgetInput').value;
+                const category = document.getElementById('categorySelect').value;
+
+                const params = new URLSearchParams();
+                if (budget) params.append('budget', budget);
+                if (category) params.append('category', category);
+
+                const response = await fetch(`${API_BASE}/scenarios/${selectedScenario}?${params}`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+
+                let html = `<h3 style="margin-bottom: 16px;">📋 ${data.scenario}推荐</h3>`;
+                html += '<div style="display: grid; gap: 16px;">';
+
+                data.recommendations.forEach((r, i) => {
+                    html += `<div class="product-card">
+                        <h4>${i + 1}. ${r.name}</h4>
+                        <p style="color: #666; margin-bottom: 8px;">${r.brand} · ${r.category}</p>
+                        <div class="price">¥${r.price}</div>
+                        <div style="margin-top: 8px; color: #667eea; font-weight: 500;">
+                            匹配度: ${r.match_score}%
+                        </div>
+                    </div>`;
+                });
+
+                html += '</div>';
+                html += `<div style="margin-top: 20px; padding: 16px; background: #e7f3ff; border-radius: 12px;">
+                    <h4>💬 购买建议</h4>
+                    <p style="line-height: 1.8; color: #555;">${data.advice}</p>
+                </div>`;
+
+                resultDiv.innerHTML = html;
+            } catch (error) {
+                resultDiv.innerHTML = `<div style="text-align: center; padding: 40px; color: #e74c3c;">
+                    <p>获取建议失败: ${error.message}</p>
+                </div>`;
+            }
+        }
+
+        // 优缺点分析
+        async function analyzeProduct() {
+            const productId = document.getElementById('analyzeProductSelect').value;
+            if (!productId) {
+                alert('请选择一个商品');
+                return;
+            }
+
+            const resultDiv = document.getElementById('analyzeResult');
+            resultDiv.innerHTML = '<div class="loading"><div class="loading-spinner"></div><p>正在分析...</p></div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/analyze/${productId}`);
+                const data = await response.json();
+
+                let html = `<h3 style="margin-bottom: 20px;">${data.product_name} 分析报告</h3>`;
+                html += '<div class="pros-cons">';
+                html += `<div class="pros"><h4>✅ 优点</h4><ul>`;
+                data.pros.forEach(p => html += `<li>${p}</li>`);
+                html += '</ul></div>';
+                html += `<div class="cons"><h4>❌ 缺点</h4><ul>`;
+                data.cons.forEach(c => html += `<li>${c}</li>`);
+                html += '</ul></div></div>';
+                html += `<div style="margin-top: 20px; padding: 16px; background: #f8f9fa; border-radius: 12px;">
+                    <h4>🎯 综合评价</h4>
+                    <p style="color: #555;">${data.verdict}</p>
+                    <p style="margin-top: 12px; color: #667eea;"><strong>适合人群:</strong> ${data.suitable_for}</p>
+                </div>`;
+
+                resultDiv.innerHTML = html;
+            } catch (error) {
+                resultDiv.innerHTML = `<div style="text-align: center; padding: 40px; color: #e74c3c;">
+                    <p>分析失败: ${error.message}</p>
+                </div>`;
+            }
+        }
+
+        // 快速决策
+        async function quickDecision() {
+            if (quickSelectedProducts.length < 2) {
+                alert('请至少选择2个待选商品');
+                return;
+            }
+
+            const resultDiv = document.getElementById('quickResult');
+            resultDiv.innerHTML = '<div class="loading"><div class="loading-spinner"></div><p>正在分析...</p></div>';
+
+            try {
+                const budget = document.getElementById('quickBudgetInput').value;
+                const priority = document.getElementById('prioritySelect').value;
+
+                const response = await fetch(`${API_BASE}/quick-decision`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        product_ids: quickSelectedProducts,
+                        budget: budget ? parseFloat(budget) : null,
+                        priority: priority
+                    })
+                });
+                const data = await response.json();
+
+                let html = '';
+                if (data.winner) {
+                    html = `<div class="winner-card">
+                        <h3>🏆 推荐选择</h3>
+                        <div class="product-name">${data.winner.name}</div>
+                        <p style="margin-top: 8px; color: #666;">${data.winner.brand}</p>
+                        <div style="margin-top: 12px; font-size: 28px; font-weight: 700; color: #e74c3c;">
+                            ¥${data.winner.price}
+                        </div>
+                        <p style="margin-top: 8px; color: #666;">${data.winner.reason}</p>
+                    </div>`;
+                    html += `<div style="padding: 16px; background: #f8f9fa; border-radius: 12px;">
+                        <p style="line-height: 1.8; color: #555;">${data.message}</p>
+                    </div>`;
+                } else {
+                    html = `<div style="text-align: center; padding: 40px; background: #fff3cd; border-radius: 12px;">
+                        <p style="color: #856404;">${data.message}</p>
+                    </div>`;
+                }
+
+                resultDiv.innerHTML = html;
+            } catch (error) {
+                resultDiv.innerHTML = `<div style="text-align: center; padding: 40px; color: #e74c3c;">
+                    <p>决策失败: ${error.message}</p>
+                </div>`;
+            }
+        }
+    </script>
+</body>
+</html>

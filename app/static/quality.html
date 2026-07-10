@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumi 质量看板</title>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        :root {
+            --bg: #f6f1ef;
+            --panel: rgba(255, 255, 255, 0.88);
+            --panel-strong: #ffffff;
+            --border: rgba(166, 140, 151, 0.16);
+            --text: #3c3036;
+            --text-soft: #786772;
+            --primary: #b793a1;
+            --primary-deep: #9f7f8d;
+            --accent: #d8c8cf;
+            --success: #84a98c;
+            --warning: #c8a16b;
+            --danger: #c97b7b;
+            --shadow: 0 20px 60px rgba(96, 72, 82, 0.10);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(217, 200, 207, 0.45), transparent 32%),
+                linear-gradient(180deg, #f8f3f1 0%, #f4efed 100%);
+            color: var(--text);
+        }
+
+        .page {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 32px 28px 40px;
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+            gap: 22px;
+            margin-bottom: 24px;
+        }
+
+        .hero-card,
+        .panel,
+        .metric-card,
+        .sample-card,
+        .recommendation-card,
+        .day-card {
+            background: var(--panel);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .hero-card {
+            border-radius: 28px;
+            padding: 28px;
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .hero-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 999px;
+            background: rgba(183, 147, 161, 0.12);
+            color: var(--primary-deep);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        h1 {
+            margin: 16px 0 10px;
+            font-size: 32px;
+            line-height: 1.15;
+            font-weight: 700;
+        }
+
+        .hero-copy {
+            max-width: 760px;
+            color: var(--text-soft);
+            font-size: 15px;
+            line-height: 1.8;
+        }
+
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 22px;
+        }
+
+        .btn {
+            appearance: none;
+            border: 0;
+            border-radius: 14px;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            color: #fff;
+            background: linear-gradient(135deg, var(--primary) 0%, #c6a7b2 100%);
+        }
+
+        .btn-secondary {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--border);
+        }
+
+        .hero-side {
+            border-radius: 28px;
+            padding: 22px;
+            display: grid;
+            gap: 14px;
+            align-content: start;
+        }
+
+        .hero-side .eyebrow {
+            font-size: 12px;
+            letter-spacing: 0;
+            color: var(--text-soft);
+            text-transform: uppercase;
+        }
+
+        .health-score {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+
+        .health-score strong {
+            font-size: 42px;
+            line-height: 1;
+        }
+
+        .hero-note {
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: rgba(216, 200, 207, 0.18);
+            color: var(--text-soft);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        @media (min-width: 1000px) {
+            .metric-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+
+        .metric-card {
+            border-radius: 22px;
+            padding: 22px;
+        }
+
+        .metric-label {
+            color: var(--text-soft);
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .metric-value {
+            font-size: 30px;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        .metric-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-soft);
+            font-size: 13px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(340px, 0.85fr);
+            gap: 20px;
+        }
+
+        .stack {
+            display: grid;
+            gap: 20px;
+        }
+
+        .panel {
+            border-radius: 26px;
+            padding: 22px;
+        }
+
+        .panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .panel-subtitle {
+            color: var(--text-soft);
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-soft);
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid var(--border);
+        }
+
+        .daily-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+        }
+
+        .day-card {
+            border-radius: 18px;
+            padding: 14px;
+        }
+
+        .day-date {
+            color: var(--text-soft);
+            font-size: 12px;
+            margin-bottom: 12px;
+        }
+
+        .bar-track {
+            width: 100%;
+            height: 8px;
+            border-radius: 999px;
+            background: rgba(183, 147, 161, 0.12);
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, var(--primary) 0%, #d1b5bf 100%);
+        }
+
+        .day-metrics {
+            display: grid;
+            gap: 4px;
+            color: var(--text-soft);
+            font-size: 12px;
+        }
+
+        .recommendation-list,
+        .sample-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .recommendation-card,
+        .sample-card {
+            border-radius: 18px;
+            padding: 16px;
+        }
+
+        .recommendation-card.critical { border-left: 4px solid var(--danger); }
+        .recommendation-card.urgent { border-left: 4px solid var(--warning); }
+        .recommendation-card.optimization { border-left: 4px solid var(--primary); }
+
+        .recommendation-title,
+        .sample-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .recommendation-desc,
+        .sample-body,
+        .sample-response {
+            color: var(--text-soft);
+            font-size: 13px;
+            line-height: 1.75;
+        }
+
+        .sample-meta,
+        .chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .chip {
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            background: rgba(216, 200, 207, 0.18);
+            color: var(--text-soft);
+        }
+
+        .chip.negative {
+            background: rgba(201, 123, 123, 0.12);
+            color: #9c5f5f;
+        }
+
+        .chip.positive {
+            background: rgba(132, 169, 140, 0.16);
+            color: #5d7c65;
+        }
+
+        .empty {
+            padding: 26px 18px;
+            border-radius: 18px;
+            text-align: center;
+            color: var(--text-soft);
+            background: rgba(255, 255, 255, 0.72);
+            border: 1px dashed rgba(166, 140, 151, 0.22);
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .sample-actions {
+            margin-top: 14px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .sample-actions button {
+            appearance: none;
+            border: 0;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .loading {
+            min-height: 220px;
+            display: grid;
+            place-items: center;
+            color: var(--text-soft);
+            font-size: 14px;
+        }
+
+        @media (max-width: 1100px) {
+            .hero,
+            .layout,
+            .metric-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .page { padding: 18px 16px 28px; }
+            .hero-card,
+            .hero-side,
+            .panel,
+            .metric-card { border-radius: 22px; }
+            h1 { font-size: 26px; }
+            .hero { grid-template-columns: 1fr; }
+            .hero-card { min-height: auto; padding: 22px; }
+            .hero-actions { flex-direction: column; }
+            .hero-actions .btn { width: 100%; justify-content: center; }
+            .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .filter-row { overflow-x: auto; flex-wrap: nowrap; }
+            .filter-chip { white-space: nowrap; flex-shrink: 0; }
+            .sample-card { padding: 14px; }
+            .day-card { padding: 12px; }
+            .layout { grid-template-columns: 1fr; }
+        }
+
+        /* 分类筛选器 */
+        .filter-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .filter-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-soft);
+        }
+        .filter-chip {
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid var(--border);
+            color: var(--text-soft);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .filter-chip:hover {
+            background: rgba(183, 147, 161, 0.12);
+            color: var(--primary-deep);
+        }
+        .filter-chip.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+        .sample-type-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        .sample-type-badge.intent { background: rgba(200, 161, 107, 0.16); color: #9a6d3f; }
+        .sample-type-badge.retrieval { background: rgba(201, 123, 123, 0.16); color: #9d5f5f; }
+        .sample-type-badge.response { background: rgba(132, 169, 140, 0.16); color: #5f7f66; }
+        .sample-type-badge.product { background: rgba(183, 147, 161, 0.16); color: #8e6a77; }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <section class="hero">
+            <div class="hero-card">
+                <div>
+                    <div class="hero-top">
+                        <div class="hero-badge">
+                            <i data-feather="activity" style="width:14px;height:14px;"></i>
+                            Lumi 评测后台
+                        </div>
+                        <div class="pill" id="lastUpdated">等待刷新</div>
+                    </div>
+                    <h1>把“能聊”变成“能证明”。</h1>
+                    <div class="hero-copy">
+                        这个页面专门服务于比赛答辩、内部复盘和质量运营，不给终端用户看。
+                        它把满意度、响应速度、低分样本、优化建议和检索证据闭环收在同一处，方便你展示这是一个可追踪、可迭代、可量化的 RAG 导购 Agent。
+                    </div>
+                </div>
+                <div class="hero-actions">
+                    <button class="btn btn-primary" id="refreshBtn">
+                        <i data-feather="refresh-cw" style="width:15px;height:15px;"></i>
+                        刷新数据
+                    </button>
+                    <a class="btn btn-secondary" href="/knowledge">
+                        <i data-feather="database" style="width:15px;height:15px;"></i>
+                        知识库工作台
+                    </a>
+                    <a class="btn btn-secondary" href="/chat">
+                        <i data-feather="message-circle" style="width:15px;height:15px;"></i>
+                        返回用户页
+                    </a>
+                </div>
+            </div>
+            <div class="hero-side">
+                <div class="eyebrow">答辩结论</div>
+                <div class="health-score">
+                    <strong id="healthScore">--</strong>
+                    <span id="healthLabel">评估中</span>
+                </div>
+                <div class="hero-note" id="heroNote">
+                    正在读取满意度、速度和低分样本，生成当前版本的质量判断。
+                </div>
+                <div class="chip-row" id="heroChips"></div>
+            </div>
+        </section>
+
+        <section class="metric-grid" id="metricGrid">
+            <div class="metric-card loading">正在汇总核心指标...</div>
+        </section>
+
+        <section class="layout">
+            <div class="stack">
+                <div class="panel">
+                    <div class="panel-head">
+                        <div>
+                            <div class="panel-title">7 天趋势</div>
+                            <div class="panel-subtitle">用真实反馈观察稳定性，而不是只展示一条成功 demo。</div>
+                        </div>
+                        <div class="pill">满意度 / 评分 / 响应时间</div>
+                    </div>
+                    <div class="daily-grid" id="dailyGrid">
+                        <div class="empty">还没有趋势数据，先在聊天页跑几轮真实咨询并提交反馈。</div>
+                    </div>
+                </div>
+
+                <div class=”panel”>
+                    <div class=”panel-head”>
+                        <div>
+                            <div class=”panel-title”>近期低分样本</div>
+                            <div class=”panel-subtitle”>这是”系统真正不稳的地方”，也是评委最在意的部分。</div>
+                        </div>
+                        <div class="pill" id="sampleCount">0 条待看</div>
+                    </div>
+                    <div class="filter-row" id="filterRow">
+                        <span class="filter-label">问题类型：</span>
+                        <button class="filter-chip active" data-type="all">全部</button>
+                        <button class="filter-chip" data-type="intent">意图识别错</button>
+                        <button class="filter-chip" data-type="retrieval">召回不准</button>
+                        <button class="filter-chip" data-type="response">答案表达</button>
+                        <button class="filter-chip" data-type="product">商品推荐错</button>
+                    </div>
+                    <div class="sample-list" id="sampleList">
+                        <div class="empty">当前没有低分样本，说明用户侧反馈还比较健康。</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stack">
+                <div class="panel">
+                    <div class="panel-head">
+                        <div>
+                            <div class="panel-title">优化建议</div>
+                            <div class="panel-subtitle">把问题直接翻译成下一轮迭代动作。</div>
+                        </div>
+                        <div class="pill">自动生成</div>
+                    </div>
+                    <div class="recommendation-list" id="recommendationList">
+                        <div class="empty">当前没有自动建议，说明主要指标还算平稳。</div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-head">
+                        <div>
+                            <div class="panel-title">评测闭环说明</div>
+                            <div class="panel-subtitle">给答辩时直接讲的那套链路。</div>
+                        </div>
+                    </div>
+                    <div class="recommendation-list">
+                        <div class="recommendation-card">
+                            <div class="recommendation-title">1. 采集真实交互反馈</div>
+                            <div class="recommendation-desc">每条回复可记录评分、正负反馈、响应时延、用户原问题、AI 回复和检索来源。</div>
+                        </div>
+                        <div class="recommendation-card">
+                            <div class="recommendation-title">2. 回收负面样本做人工复盘</div>
+                            <div class="recommendation-desc">把低分 case 拉出来看误判类型，是意图识别错、召回不准、还是答案表达没说服力。</div>
+                        </div>
+                        <div class="recommendation-card">
+                            <div class="recommendation-title">3. 反哺 Prompt 与知识库</div>
+                            <div class="recommendation-desc">基于样本集中出现的问题，调整意图 schema、召回过滤、重排逻辑和知识库内容。</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        feather.replace();
+
+        const refreshBtn = document.getElementById('refreshBtn');
+        const metricGrid = document.getElementById('metricGrid');
+        const dailyGrid = document.getElementById('dailyGrid');
+        const recommendationList = document.getElementById('recommendationList');
+        const sampleList = document.getElementById('sampleList');
+        const sampleCount = document.getElementById('sampleCount');
+        const healthScore = document.getElementById('healthScore');
+        const healthLabel = document.getElementById('healthLabel');
+        const heroNote = document.getElementById('heroNote');
+        const heroChips = document.getElementById('heroChips');
+        const lastUpdated = document.getElementById('lastUpdated');
+        const filterRow = document.getElementById('filterRow');
+
+        let currentFilter = 'all';
+        let allBadSamples = [];
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function formatDate(value) {
+            if (!value) return '--';
+            const date = new Date(value);
+            return `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+        }
+
+        function formatDuration(value) {
+            const ms = Number(value || 0);
+            if (!ms) return '--';
+            return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${Math.round(ms)}ms`;
+        }
+
+        function computeHealth(summary, report, badSamples) {
+            const satisfaction = Number(summary.satisfaction_rate || 0);
+            const avgRating = Number(summary.avg_rating || 0);
+            const response = Number(summary.avg_response_time_ms || 0);
+            const penalty = Math.min((badSamples?.length || 0) * 4, 18);
+            const responsePenalty = response > 0 ? Math.min(response / 250, 20) : 0;
+            const ratingScore = avgRating > 0 ? avgRating * 18 : 0;
+            const total = Math.max(0, Math.min(100, satisfaction * 0.55 + ratingScore + 8 - penalty - responsePenalty));
+            const rounded = Math.round(total);
+            const label = report?.overall_quality === 'good'
+                ? (rounded >= 85 ? '状态优秀' : '整体健康')
+                : (rounded >= 70 ? '需要继续打磨' : '优先修问题');
+            return { score: rounded, label };
+        }
+
+        function createMetricCard(label, value, meta) {
+            return `
+                <div class="metric-card">
+                    <div class="metric-label">${escapeHtml(label)}</div>
+                    <div class="metric-value">${value}</div>
+                    <div class="metric-meta">${meta}</div>
+                </div>
+            `;
+        }
+
+        function renderMetrics(stats, report, badSamples) {
+            const summary = stats || {};
+            metricGrid.innerHTML = [
+                createMetricCard('满意度', `${Number(summary.satisfaction_rate || 0).toFixed(1)}%`, `👍 ${summary.thumbs_up || 0} / 👎 ${summary.thumbs_down || 0}`),
+                createMetricCard('平均评分', `${Number(summary.avg_rating || 0).toFixed(1)}`, `${summary.total_ratings || 0} 条有效评分`),
+                createMetricCard('Citation命中率', `${Number(summary.citation_hit_rate || 0).toFixed(1)}%`, '有来源的回复占比'),
+                createMetricCard('文档命中率', `${Number(summary.document_hit_rate || 0).toFixed(1)}%`, '命中文档资料的回复占比'),
+                createMetricCard('平均响应时延', formatDuration(summary.avg_response_time_ms), '越稳越能撑答辩'),
+                createMetricCard('低分样本', `${badSamples.length}`, `${badSamples.length ? '优先人工复盘' : '当前无告警样本'}`)
+            ].join('');
+
+            const health = computeHealth(summary, report, badSamples);
+            healthScore.textContent = health.score;
+            healthLabel.textContent = health.label;
+            heroNote.textContent = badSamples.length
+                ? `当前已有 ${badSamples.length} 条低分样本可复盘，建议答辩时主动展示你如何把这些 bad case 反哺给系统。`
+                : '当前没有明显坏样本，适合把这个页面作为”质量闭环已跑通”的证明展示给评委。';
+
+            heroChips.innerHTML = `
+                <span class=”chip ${Number(summary.satisfaction_rate || 0) >= 80 ? 'positive' : ''}”>满意度 ${Number(summary.satisfaction_rate || 0).toFixed(1)}%</span>
+                <span class=”chip”>Citation ${Number(summary.citation_hit_rate || 0).toFixed(1)}%</span>
+                <span class=”chip”>文档命中 ${Number(summary.document_hit_rate || 0).toFixed(1)}%</span>
+                <span class=”chip ${badSamples.length ? 'negative' : ''}”>低分样本 ${badSamples.length}</span>
+            `;
+        }
+
+        function renderDailyStats(dailyStats) {
+            if (!dailyStats || !dailyStats.length) {
+                dailyGrid.innerHTML = '<div class="empty">还没有趋势数据，先在聊天页跑几轮真实咨询并提交反馈。</div>';
+                return;
+            }
+
+            const maxEvaluations = Math.max(...dailyStats.map(item => Number(item.total_evaluations || 0)), 1);
+            dailyGrid.innerHTML = dailyStats
+                .slice()
+                .reverse()
+                .map(item => {
+                    const fill = Math.max(10, Math.round(Number(item.total_evaluations || 0) / maxEvaluations * 100));
+                    return `
+                        <div class="day-card">
+                            <div class="day-date">${escapeHtml(item.date)}</div>
+                            <div class="bar-track"><div class="bar-fill" style="width:${fill}%"></div></div>
+                            <div class="day-metrics">
+                                <span>反馈 ${Number(item.total_evaluations || 0)}</span>
+                                <span>评分 ${Number(item.avg_rating || 0).toFixed(1)}</span>
+                                <span>时延 ${formatDuration(item.avg_response_time)}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+        }
+
+        function renderRecommendations(report) {
+            const recommendations = report?.recommendations || [];
+            if (!recommendations.length) {
+                recommendationList.innerHTML = '<div class="empty">当前没有自动建议，主要指标比较平稳。接下来可以继续补更多真实样本，把闭环跑厚一点。</div>';
+                return;
+            }
+
+            recommendationList.innerHTML = recommendations.map(item => `
+                <div class="recommendation-card ${escapeHtml(item.type || 'optimization')}">
+                    <div class="recommendation-title">${escapeHtml(item.title || '待优化项')}</div>
+                    <div class="recommendation-desc">${escapeHtml(item.description || '')}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderSamples(samples) {
+            allBadSamples = samples || [];
+            const filteredSamples = currentFilter === 'all'
+                ? allBadSamples
+                : (allBadSamples.filter(item => {
+                    // 根据反馈文本或评分推断问题类型
+                    const feedback = (item.feedback_text || '').toLowerCase();
+                    const message = (item.user_message || '').toLowerCase();
+                    if (currentFilter === 'intent') {
+                        return feedback.includes('意图') || feedback.includes('理解错') || feedback.includes('没懂');
+                    }
+                    if (currentFilter === 'retrieval') {
+                        return feedback.includes('召回') || feedback.includes('检索') || feedback.includes('没找到');
+                    }
+                    if (currentFilter === 'response') {
+                        return feedback.includes('回答') || feedback.includes('表达') || feedback.includes('说清楚');
+                    }
+                    if (currentFilter === 'product') {
+                        return feedback.includes('推荐') || feedback.includes('商品') || message.includes('推荐');
+                    }
+                    return true;
+                }) || []);
+
+            sampleCount.textContent = `${filteredSamples.length} 条待看`;
+            if (!filteredSamples.length) {
+                sampleList.innerHTML = `<div class="empty">${currentFilter === 'all' ? '当前没有低分样本。可以在聊天页故意构造复杂 query，做一轮压力测试，把误判 case 收回来。' : '当前分类下没有样本。'}</div>`;
+                return;
+            }
+
+            sampleList.innerHTML = filteredSamples.map(item => {
+                // 自动推断问题类型标签
+                const feedback = (item.feedback_text || '').toLowerCase();
+                let typeLabel = '';
+                let typeClass = '';
+                if (feedback.includes('意图') || feedback.includes('理解错')) {
+                    typeLabel = '意图识别';
+                    typeClass = 'intent';
+                } else if (feedback.includes('召回') || feedback.includes('检索')) {
+                    typeLabel = '召回不准';
+                    typeClass = 'retrieval';
+                } else if (feedback.includes('回答') || feedback.includes('表达')) {
+                    typeLabel = '答案表达';
+                    typeClass = 'response';
+                } else if (feedback.includes('推荐') || feedback.includes('商品')) {
+                    typeLabel = '商品推荐';
+                    typeClass = 'product';
+                }
+
+                return `
+                    <div class="sample-card ${typeClass ? 'classified' : ''}">
+                        ${typeLabel ? `<span class="sample-type-badge ${typeClass}">${escapeHtml(typeLabel)}</span>` : ''}
+                        <div class="sample-title">${escapeHtml(item.user_message || '未记录用户问题')}</div>
+                        <div class="sample-body">${escapeHtml(item.feedback_text || '用户未填写文字反馈')}</div>
+                        <div class="sample-response">AI 回复摘要：${escapeHtml((item.ai_response || '').slice(0, 140) || '暂无')}</div>
+                        <div class="sample-meta">
+                            <span class="chip negative">${escapeHtml(item.feedback_type || 'thumbs_down')}</span>
+                            <span class="chip">评分 ${item.rating || '--'}</span>
+                            <span class="chip">时延 ${formatDuration(item.response_time_ms)}</span>
+                            <span class="chip">时间 ${formatDate(item.created_at)}</span>
+                        </div>
+                        ${(item.retrieval_sources || []).length ? `
+                            <div class="chip-row">
+                                ${(item.retrieval_sources || []).slice(0, 4).map(source => `<span class="chip">${escapeHtml(source)}</span>`).join('')}
+                            </div>
+                        ` : ''}
+                        <div class="sample-actions">
+                            <button onclick="markReviewed(${Number(item.id)})">标记已复盘</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function markReviewed(id) {
+            try {
+                const response = await fetch(`/api/v1/evaluation/review/${id}`, {
+                    method: 'POST'
+                });
+                if (!response.ok) throw new Error('标记失败');
+                await loadDashboard();
+            } catch (error) {
+                console.error(error);
+                alert('标记失败，请稍后再试');
+            }
+        }
+
+        async function loadDashboard() {
+            refreshBtn.disabled = true;
+            refreshBtn.innerHTML = '<i data-feather="loader" style="width:15px;height:15px;"></i> 刷新中';
+            feather.replace();
+
+            try {
+                const [statsRes, reportRes, badSamplesRes] = await Promise.all([
+                    fetch('/api/v1/evaluation/stats?days=7'),
+                    fetch('/api/v1/evaluation/report'),
+                    fetch('/api/v1/evaluation/bad-samples?limit=8')
+                ]);
+
+                if (!statsRes.ok || !reportRes.ok || !badSamplesRes.ok) {
+                    throw new Error('质量数据读取失败');
+                }
+
+                const statsJson = await statsRes.json();
+                const reportJson = await reportRes.json();
+                const badSamplesJson = await badSamplesRes.json();
+
+                renderMetrics(statsJson, reportJson.report, badSamplesJson.samples || []);
+                renderDailyStats(statsJson.daily_stats || []);
+                renderRecommendations(reportJson.report);
+                renderSamples(badSamplesJson.samples || []);
+                lastUpdated.textContent = `更新于 ${formatDate(new Date().toISOString())}`;
+            } catch (error) {
+                console.error(error);
+                metricGrid.innerHTML = '<div class="metric-card loading">质量数据暂时读取失败，请确认后端服务和数据库都已启动。</div>';
+                dailyGrid.innerHTML = '<div class="empty">质量趋势读取失败。</div>';
+                recommendationList.innerHTML = '<div class="empty">优化建议读取失败。</div>';
+                sampleList.innerHTML = '<div class="empty">低分样本读取失败。</div>';
+            } finally {
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = '<i data-feather="refresh-cw" style="width:15px;height:15px;"></i> 刷新数据';
+                feather.replace();
+            }
+        }
+
+        refreshBtn.addEventListener('click', loadDashboard);
+
+        // 分类筛选器点击事件
+        filterRow.addEventListener('click', (e) => {
+            const chip = e.target.closest('.filter-chip');
+            if (!chip) return;
+            const type = chip.dataset.type;
+            currentFilter = type;
+            // 更新激活状态
+            filterRow.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            // 重新渲染样本列表
+            renderSamples(allBadSamples);
+        });
+
+        loadDashboard();
+    </script>
+</body>
+</html>

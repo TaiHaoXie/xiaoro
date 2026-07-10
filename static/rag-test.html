@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG 智能检索</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        .header h1 { font-size: 32px; margin-bottom: 8px; }
+        .header p { opacity: 0.9; }
+        .main-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .query-section {
+            padding: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .query-section h2 { margin-bottom: 16px; }
+        .query-input {
+            width: 100%;
+            padding: 16px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 12px;
+        }
+        .query-input:focus {
+            outline: none;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        .query-btn {
+            width: 100%;
+            padding: 14px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+        .query-btn:hover { opacity: 0.9; }
+        .query-btn:active { transform: scale(0.98); }
+        .query-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .quick-queries {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+        .quick-btn {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 20px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .quick-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .response-section {
+            padding: 24px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .response-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .response-card h3 {
+            color: #333;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .response-text {
+            line-height: 1.8;
+            color: #555;
+            white-space: pre-wrap;
+        }
+        .sources-section {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .sources-section h4 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 12px;
+        }
+        .source-tag {
+            display: inline-block;
+            padding: 6px 12px;
+            background: #e9ecef;
+            border-radius: 16px;
+            font-size: 12px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        .source-tag.product { background: #d4edda; color: #155724; }
+        .source-tag.knowledge { background: #cce5ff; color: #004085; }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .knowledge-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        .knowledge-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 16px;
+            border-left: 4px solid #667eea;
+        }
+        .knowledge-card h4 {
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .knowledge-card p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .knowledge-meta {
+            margin-top: 12px;
+            font-size: 12px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 RAG 智能检索</h1>
+            <p>结合知识库和向量检索的增强问答系统</p>
+        </div>
+
+        <div class="main-card">
+            <div class="query-section">
+                <h2>💬 提问</h2>
+                <input type="text" class="query-input" id="queryInput" placeholder="输入您的问题，例如：如何选择合适的手机？">
+                <button class="query-btn" id="queryBtn" onclick="performQuery()">🔍 智能检索</button>
+                <div class="quick-queries">
+                    <button class="quick-btn" onclick="quickQuery('如何选择合适的手机？')">📱 选手机</button>
+                    <button class="quick-btn" onclick="quickQuery('什么是降噪耳机？')">🎧 降噪耳机</button>
+                    <button class="quick-btn" onclick="quickQuery('iPhone 15 Pro 有什么特点？')">🍎 iPhone 15 Pro</button>
+                    <button class="quick-btn" onclick="quickQuery('商品支持退换货吗？')">🔄 退换货政策</button>
+                </div>
+            </div>
+
+            <div class="response-section" id="responseSection">
+                <div style="text-align: center; padding: 40px; color: #999;">
+                    <div style="font-size: 48px; margin-bottom: 12px;">🤔</div>
+                    <p>输入问题开始智能检索</p>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <div class="main-card">
+                <div style="padding: 20px;">
+                    <h3 style="margin-bottom: 16px;">📚 知识库预览</h3>
+                    <div class="knowledge-list" id="knowledgeList">
+                        <div style="text-align: center; padding: 20px; color: #999;">加载中...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const queryInput = document.getElementById('queryInput');
+        const queryBtn = document.getElementById('queryBtn');
+        const responseSection = document.getElementById('responseSection');
+        const knowledgeList = document.getElementById('knowledgeList');
+
+        // 快捷查询
+        function quickQuery(text) {
+            queryInput.value = text;
+            performQuery();
+        }
+
+        // 执行查询
+        async function performQuery() {
+            const query = queryInput.value.trim();
+            if (!query) return;
+
+            queryBtn.disabled = true;
+            queryBtn.textContent = '⏳ 检索中...';
+            responseSection.innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>正在检索知识库并生成回答...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/rag/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query, top_k: 5 })
+                });
+
+                const data = await response.json();
+
+                // 显示结果
+                let sourcesHtml = '';
+                if (data.sources && data.sources.length > 0) {
+                    sourcesHtml = data.sources.map(s => {
+                        const type = s.type === 'product' ? 'product' : 'knowledge';
+                        const name = s.name || s.title;
+                        return `<span class="source-tag ${type}">${type === 'product' ? '📦' : '📚'} ${name}</span>`;
+                    }).join('');
+                }
+
+                responseSection.innerHTML = `
+                    <div class="response-card">
+                        <h3>💡 AI 回答</h3>
+                        <div class="response-text">${data.response}</div>
+                        ${sourcesHtml ? `
+                            <div class="sources-section">
+                                <h4>📎 来源引用</h4>
+                                ${sourcesHtml}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+
+            } catch (error) {
+                responseSection.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #e74c3c;">
+                        <div style="font-size: 48px; margin-bottom: 12px;">❌</div>
+                        <p>查询失败: ${error.message}</p>
+                    </div>
+                `;
+            }
+
+            queryBtn.disabled = false;
+            queryBtn.textContent = '🔍 智能检索';
+        }
+
+        // 回车查询
+        queryInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') performQuery();
+        });
+
+        // 加载知识库
+        async function loadKnowledge() {
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/rag/knowledge/faq');
+                const data = await response.json();
+
+                if (data.results && data.results.length > 0) {
+                    knowledgeList.innerHTML = data.results.map(item => `
+                        <div class="knowledge-card">
+                            <h4>❓ ${item.question}</h4>
+                            <p>${item.answer.substring(0, 100)}...</p>
+                            <div class="knowledge-meta">
+                                📁 ${item.metadata.category} · 🏷️ ${item.metadata.tags.join(', ')}
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    knowledgeList.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;">暂无知识</div>';
+                }
+            } catch (error) {
+                knowledgeList.innerHTML = `<div style="text-align: center; padding: 20px; color: #e74c3c;">加载失败: ${error.message}</div>`;
+            }
+        }
+
+        // 页面加载时获取知识库
+        loadKnowledge();
+    </script>
+</body>
+</html>

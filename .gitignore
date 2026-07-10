@@ -1,0 +1,52 @@
+.venv/
+.playwright-cli/
+.trae/
+.backup_before_wipe/
+__pycache__/
+*.pyc
+*.pyo
+.Python
+.env
+.DS_Store
+*.db
+backups/
+app/static/product-images/seed_backup_*/
+celerybeat-schedule.db
+*.log
+lark_auth_qr*.png
+static/current-image-contact-sheet.jpg
+
+# 本地Milvus向量数据库数据（别人拉代码后需要自己init/seed）
+.milvus/
+
+# 爬取/下载的商品图片：默认忽略整个目录（含大量废弃/重复图），
+# 但用 git add -f 强制纳入 seed_dump.sql 里 103 条商品实际引用的图片（约37MB）。
+app/static/images/products/
+
+# 测试截图（本地调试产物）
+test_screenshots/
+
+# 临时文件
+.tmp_*.png
+.tmp_*.jpg
+_v2_test.json
+_img_download_results.json
+
+# 一期收敛：临时下载/爬取产物
+.tmp_image_audit/
+.tmp_jd_imgs/
+.tmp_user_download_audit/
+.tmp_websave_audit/
+_temp_raw_imgs/
+_img_download_results.json
+_v2_test.json
+lark_auth_qr.png
+lark_auth_qr_wiki.png
+static/.DS_Store
+app/static/crawled_audit.html
+data/browser_profile/
+data/image_index/
+app/static/product-images/crawled/
+app/static/product-images/generated/
+app/static/product-images/estee-lauder-dw-foundation.jpg
+app/static/product-images/nars-light-reflecting-pressed-powder.jpg
